@@ -54,59 +54,86 @@ impl WavHeader {
     }
 }
 
-// represents that there are both notes and rests
-type Frequency = f32;
-type Volume = f32;
-enum Sound {
-    Frequency((Frequency, Volume)),
-    Rest
-}
-
+/// Represents a certain pitch at a certain time at a certain volume. Is part of a [Part]
 struct Note {
-    sound: Sound,
-    duration: f32
+    time: f32,
+    duration: f32,
+    frequency: f32,
+    volume: f32
 }
 
 impl Note {
-    fn new(sound: Sound, duration: f32) -> Result<Self, String> {
-        if let Sound::Frequency((freq, vol)) = sound {
-            if vol > 1.0 {
-                return Err("Note must have volume in range [0, 1]".to_string());
+    fn new(time: f32, duration: f32, frequency: f32, volume: f32) -> Result<Self, String> {
+        if volume > 1.0 {
+            return Err("Note must have volume in range [0, 1]".to_string());
+        }
+        Ok(Note {time, duration, frequency, volume})
+    }
+
+    fn end_time(&self) -> f32 {
+        self.time + self.duration
+    }
+
+    fn plays_at(&self, time: f32) -> bool {
+        if time >= self.time && time < self.end_time() {
+            return true;
+        }
+        false
+    }
+
+    fn get_sample_amplitude(&self, time: f32) -> i16 {
+        ((time * 2.0 * PI * self.frequency).sin() * self.volume * MAX_AMPLITUDE as f32) as i16
+    }
+}
+
+/// Represents a musical instrement or part. Can only play one [Note] at a time and multiple Parts are part of a [Song]
+struct Part {
+    notes: Vec<Note>
+}
+
+impl Part {
+    fn new() -> Self {
+        Part { notes: Vec::new()}
+    }
+
+    // Checks if the part has a note at a certain time
+    fn has_note(&self, time: f32) -> Option<&Note> {
+        for note in &self.notes {
+            if note.plays_at(time) {
+                return Some(note)
             }
         }
-        Ok(Note {sound, duration})
+        None
     }
 
-    fn time_in_samples(&self, options: &WavOptions) -> u32 {
-        (self.duration * options.sample_rate as f32) as u32
-    }
-
-    fn as_samples(&self, time_in_samples: u32, options: &WavOptions) -> Vec<i16>{
-        // ensure not dividing by 0
-        assert_ne!(options.sample_rate, 0, "Sample Rate can not be 0!");
-
-        let mut samples = Vec::new();
-
-        let num_samples = self.time_in_samples(options);
-        for i in 0..num_samples {
-            let sample: i16 = match self.sound {
-                Sound::Frequency((freq, vol)) => {
-                    let time = (time_in_samples + i) as f32 / options.sample_rate as f32 * freq * PI * 2.0;
-                    (time.sin() * MAX_AMPLITUDE as f32 * vol) as i16
-                }
-                Sound::Rest => 0
-            };
-
-            samples.push(sample);
+    fn add_note(&mut self, note: Note) -> Result<(), String>{
+        for note_i in &self.notes {
+            if note_i.plays_at(note.time) || note_i.plays_at(note.end_time()) {
+                return Err("can't add note inside another notes play time".to_string());
+            }
         }
-
-        samples
+        self.notes.push(note);
+        Ok(())
     }
 
-    fn write(&self, mut file: &File, time_in_samples: u32, options: &WavOptions) {
-        let samples = self.as_samples(time_in_samples, options);
-        for sample in &samples {
-            file.write_all(&sample.to_le_bytes());
+    fn duration(&self) -> f32 {
+        let mut final_note_end: f32 = 0.0;
+        for note in &self.notes {
+            let note_end = note.time + note.duration;
+            if note_end > final_note_end {
+                final_note_end = note_end;
+            }
+        }
+        final_note_end
+    }
+}
+
+impl Default for Part {
+    fn default() -> Self {
+        Part { notes: vec![
+            Note { frequency: 440.0 /* A */, volume: 0.25, time: 0.0, duration: 1.0 },
+            Note {frequency: 440.0 /* A */, volume: 0.5, time: 2.0, duration: 1.0 },
+            Note {frequency: 293.99, volume: 0.5, time: 3.0, duration: 1.0 }]
         }
     }
 }
@@ -128,25 +155,58 @@ impl Default for WavOptions {
 }
 
 struct Song {
-    notes: Vec<Note>
+    parts: Vec<Part>
 }
 
 impl Song {
     fn new() -> Self {
-        let notes = vec![Note {sound: Sound::Frequency((440.0, 0.25) /* A */), duration: 1.0 }, Note { sound: Sound::Rest, duration: 1.0 }, Note {sound: Sound::Frequency((440.0, 0.5) /* A */), duration: 1.0 }];
-        Song { notes }
+        Song { parts: vec![
+            Part::default(),
+            Part { notes: vec![
+                Note { frequency: 293.99, volume: 0.25, time: 0.0, duration: 1.0 }, 
+                Note { frequency: 293.99, volume: 0.25, time: 1.0, duration: 0.5 },
+                Note { frequency: 150.00, volume: 0.25, time: 1.5, duration: 1.5 }] 
+            }] }
     }
 
-    fn add_note(&mut self, note: Note) {
-        self.notes.push(note);
-    }
-
-    fn duration(&self) -> f32 {
-        let mut total_duration: f32 = 0.0;
-        for note in &self.notes {
-            total_duration += note.duration;
+    fn duration(&self)-> f32 {
+        let mut longest_part = 0.0;
+        for part in &self.parts {
+            let part_duration = part.duration();
+            if part_duration > longest_part {
+                longest_part = part_duration
+            }
         }
-        total_duration
+        longest_part
+    }
+
+    fn compile_parts_into_samples(&self, options: &WavOptions) -> Vec<i16> {
+        let num_samples: usize = (self.duration() * options.sample_rate as f32) as usize;
+        let mut samples = Vec::with_capacity(num_samples);
+        for i in 0..num_samples {
+            let time = i as f32 / options.sample_rate as f32;
+            let mut sample_amplitude: i16 = 0;
+            for part in &self.parts {
+                match part.has_note(i as f32 / options.sample_rate as f32) {
+                    Some(note) => {
+                        sample_amplitude += note.get_sample_amplitude(time)
+                    },
+                    None => ()
+                };
+            }
+            samples.push(sample_amplitude);
+        }
+        samples
+    }
+
+    fn compile_parts_into_bytes(&self, options: &WavOptions) -> Vec<u8> {
+        let samples = self.compile_parts_into_samples(options);
+        let mut bytes = Vec::with_capacity(samples.capacity() * 2);
+
+        for sample in &samples {
+            bytes.extend(&sample.to_le_bytes())
+        }
+        bytes
     }
 
     fn write_to_file(&self, file_path: &str, options: &WavOptions) {
@@ -155,13 +215,9 @@ impl Song {
         let data_size: u32 = (self.duration() * (options.bits_per_sample as u32 * options.sample_rate * options.num_channels as u32) as f32 / 8.0) as u32;
 
         let header = WavHeader::new(data_size, &options);
-        file.write_all(header.as_bytes());
+        let _ = file.write_all(header.as_bytes());
 
-        let mut time_in_samples: u32 = 0;
-        for note in &self.notes {
-            note.write(&file, time_in_samples, &options);
-            time_in_samples += note.time_in_samples(options);
-        }
+        let _ = file.write_all(&self.compile_parts_into_bytes(options));
     }
 }
 
@@ -170,9 +226,7 @@ fn main() {
     let wav_options = WavOptions::default();
 
     // load / create song
-    let mut song = Song::new();
-
-    song.add_note(Note { sound: Sound::Frequency((293.99, 0.5)), duration: 1.0 });
+    let song = Song::new();
 
     // create wav file
     song.write_to_file("output.wav", &wav_options);
