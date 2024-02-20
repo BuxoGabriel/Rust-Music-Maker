@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, fs::File, io::Write};
+use std::{f32::consts::PI, fs::File, io::{self, Write}};
 
 const BITS_PER_SAMPLE: u16 = 16;
 const MAX_AMPLITUDE: i16 = i16::MAX;
@@ -155,18 +155,20 @@ impl Default for WavOptions {
 }
 
 struct Song {
+    name: String,
     parts: Vec<Part>
 }
 
 impl Song {
-    fn new() -> Self {
-        Song { parts: vec![
+    fn new(name: String) -> Self {
+        Song { name, parts: vec![
             Part::default(),
             Part { notes: vec![
                 Note { frequency: 293.99, volume: 0.25, time: 0.0, duration: 1.0 }, 
                 Note { frequency: 293.99, volume: 0.25, time: 1.0, duration: 0.5 },
                 Note { frequency: 150.00, volume: 0.25, time: 1.5, duration: 1.5 }] 
-            }] }
+            }]
+        }
     }
 
     fn duration(&self)-> f32 {
@@ -209,8 +211,11 @@ impl Song {
         bytes
     }
 
-    fn write_to_file(&self, file_path: &str, options: &WavOptions) {
-        let mut file = File::create(file_path).expect("Failed to create file");
+    fn write_to_file(&self, file_name: &str, options: &WavOptions) {
+        let mut file_name = String::from(file_name);
+        file_name.push_str(".wav");
+        println!("Writing to file {file_name}!");
+        let mut file = File::create(file_name.as_str()).expect("Failed to create file");
 
         let data_size: u32 = (self.duration() * (options.bits_per_sample as u32 * options.sample_rate * options.num_channels as u32) as f32 / 8.0) as u32;
 
@@ -221,16 +226,146 @@ impl Song {
     }
 }
 
+struct SongEditor {
+    loaded_songs: Vec<Song>
+}
+
+impl SongEditor {
+    fn new() -> Self {
+        SongEditor { loaded_songs: Vec::new() }
+    }
+
+    fn ui(&mut self) {
+        println!("Hello! Welcome to Song Maker!");
+        'ui: loop {
+            self.show_songs_ui();
+            println!("Select one of the options listed below:");
+            println!("\t1. Load Song");
+            println!("\t2. Create Song");
+            println!("\t3. Edit Song");
+            println!("\t4. Export Song to wav file");
+            println!("\t5. Exit Song Maker");
+            let mut option = String::new();
+            loop {
+                io::stdin().read_line(&mut option).expect("Could not read user input");
+                match option.trim() {
+                    "1" => {
+                        self.load_ui();
+                        break;
+                    }
+                    "2" => {
+                        self.create_ui();
+                        break;
+                    }
+                    "3" => {
+                        self.edit_ui();
+                        break;
+                    }
+                    "4" => {
+                        self.compile_ui();
+                        break;
+                    }
+                    "5" | "q" | "Q" => {
+                        break 'ui;
+                    }
+                    _ => {
+                        println!("option not recognized! press q to quit or select another option!");
+                    }
+                }
+            }
+        }
+        println!("Goodbye from Song Maker!")
+    }
+
+    fn show_songs_ui(&mut self) {
+        println!("Available Songs:");
+        for (index, song) in self.loaded_songs.iter().enumerate() {
+            println!("\t{index}. {}", song.name);
+        }
+    }
+
+    fn create_ui(&mut self) {
+        print!("Song name: ");
+        io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+        let mut song_name = String::new();
+        io::stdin().read_line(&mut song_name).expect("Failed to read song name!");
+        let song_name = song_name.trim().to_string();
+        if let Some((index, _song)) = self.loaded_songs.iter().enumerate().find(|(_index, song)| song.name == song_name) {
+            println!("A song already exists with this name would you like to overwrite it? (y/n)");
+            let mut overwrite = String::new();
+            io::stdin().read_line(&mut overwrite).expect("Failed to read user input!");
+            match overwrite.trim() {
+                "y" | "yes" | "Y" | "YES" => {
+                    self.loaded_songs.remove(index);
+                }
+                _ => {
+                    println!("Create song aborted!");
+                    return;
+                }
+            }
+        }
+        self.loaded_songs.push(Song::new(song_name));
+        println!("Created song!")
+    }
+
+    fn edit_ui(&mut self) {
+        loop {
+            println!("Which song would you like to edit?");
+            let mut edit_index = String::new();
+            io::stdin().read_line(&mut edit_index).expect("Failed to read user input!");
+            let edit_index = edit_index.trim();
+            if let Ok(index) = edit_index.parse::<usize>() {
+                if let Some(song) = self.loaded_songs.get(index) {
+                    // Editing Song ui
+                    // TODO
+                    println!("Editing Song...");
+                    println!("Done editing Song!");
+                    break
+                }
+            }
+            println!("{edit_index} is not a valid song index!")
+        } 
+    }
+
+    fn load_ui(&mut self) {
+        // TODO
+    }
+
+    fn save(&self) {
+        // TODO
+    }
+
+    fn compile_ui(&self) {
+        loop {
+            println!("Which song would you like to compile?");
+            let mut compile_index = String::new();
+            io::stdin().read_line(&mut compile_index).expect("Failed to read user input!");
+            let compile_index = compile_index.trim();
+            if let Ok(index) = compile_index.parse::<usize>() {
+                if let Some(song) = self.loaded_songs.get(index) {
+                    println!("compiling song...");
+                    song.write_to_file(song.name.as_str(), &WavOptions::default());
+                    println!("compilation_complete!");
+                    break
+                }
+            }
+            println!("{compile_index} is not a valid song index!")
+        } 
+    }
+}
+
 fn main() {
-    // get file options
-    let wav_options = WavOptions::default();
+    // // get file options
+    // let wav_options = wavoptions::default();
 
-    // load / create song
-    let song = Song::new();
+    // // load / create song
+    // let song = song::new();
 
-    // create wav file
-    song.write_to_file("output.wav", &wav_options);
+    // // create wav file
+    // song.write_to_file("output", &wav_options);
 
-    // Signal Completion
-    print!("created wav file")
+    // // signal completion
+    // print!("created wav file")
+    let mut song_editor = SongEditor::new();
+    song_editor.ui()
 }
