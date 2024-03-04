@@ -7,20 +7,18 @@ use super::serializable::Serializable;
 
 ///
 pub struct Song {
-    name: String,
-    parts: Vec<Part>
+    pub name: String,
+    pub bpm: u16,
+    pub parts: Vec<Part>
 }
 
 impl Song {
-    pub fn new(name: String) -> Self {
+    pub fn new(name: String, bpm: u16) -> Self {
         Self {
             name,
+            bpm, 
             parts: Vec::new()
         }
-    }
-
-    pub fn name(&self) -> &String {
-        &self.name
     }
 
     pub fn duration(&self)-> f32 {
@@ -35,13 +33,13 @@ impl Song {
     }
 
     pub fn compile_parts_into_samples(&self, options: &WavOptions) -> Vec<i16> {
-        let num_samples: usize = (self.duration() * options.sample_rate as f32) as usize;
+        let num_samples: usize = (beat_in_seconds(self.duration(), self.bpm as f32) * options.sample_rate as f32) as usize;
         let mut samples = Vec::with_capacity(num_samples);
         for i in 0..num_samples {
             let time = i as f32 / options.sample_rate as f32;
             let mut sample_amplitude: i16 = 0;
             for part in &self.parts {
-                match part.has_note(i as f32 / options.sample_rate as f32) {
+                match part.has_note_at_beat(second_in_beats(time, self.bpm as f32)) {
                     Some(note) => {
                         sample_amplitude += note.get_sample_amplitude(time)
                     },
@@ -98,11 +96,11 @@ impl Song {
 impl Default for Song {
     fn default() -> Self {
         let mut base = Part::new("base".to_string());
-        let _ = base.add_note(Note { frequency: 293.99, volume: 0.25, time: 0.0, duration: 1.0 });
-        _ = base.add_note(Note { frequency: 293.99, volume: 0.25, time: 1.0, duration: 0.5 });
-        _ =base.add_note(Note { frequency: 150.00, volume: 0.25, time: 1.5, duration: 1.5 });
+        let _ = base.add_note(Note { frequency: 293.99, volume: 0.25, beat: 0.0, duration: 1.0 });
+        _ = base.add_note(Note { frequency: 293.99, volume: 0.25, beat: 1.0, duration: 0.5 });
+        _ =base.add_note(Note { frequency: 150.00, volume: 0.25, beat: 1.5, duration: 1.5 });
 
-        Song { name: "Demo Song".to_string(), parts: vec![Part::default(), base]
+        Song { name: "Demo Song".to_string(), bpm: 120, parts: vec![Part::default(), base]
         }
     }
 }
@@ -111,6 +109,7 @@ impl Serializable for Song {
     /// Serializes a `Song` struct into a byte representation
     /// u16: name_len
     /// name_len: name
+    /// u16: bpm
     /// u16: num parts
     /// (parts) u16: size_of_part
     /// (parts) size_of_part: part
@@ -125,6 +124,8 @@ impl Serializable for Song {
         let name_len = name_len as u16;
         serialized_data.extend(name_len.to_le_bytes());
         serialized_data.extend(name_as_bytes);
+        // Serialize bpm
+        serialized_data.extend(self.bpm.to_le_bytes());
         // Serialize number of parts
         let num_parts: u16 = self.parts.len() as u16;
         serialized_data.extend(num_parts.to_le_bytes());
@@ -156,14 +157,20 @@ impl Serializable for Song {
         }
         let name_bytes = &serialized_data[2..(2+name_len)];
         let name = String::from_utf8_lossy(name_bytes).into_owned();
-        // Deserialize number of parts
+        // Deserialize bpm
         if (&serialized_data[(2+name_len)..] as &[u8]).len() < 2 {
+            return Err("Invalid serialized data! Insufficent length for bpm!");
+        }
+        let bpm_bytes = &serialized_data[(2+name_len)..(4+name_len)];
+        let bpm = u16::from_le_bytes(bpm_bytes.try_into().unwrap());
+        // Deserialize number of parts
+        if (&serialized_data[(4+name_len)..] as &[u8]).len() < 2 {
             return Err("Invalid serialized data! Insufficent length for number of parts!");
         }
-        let num_parts_bytes = &serialized_data[(2+name_len)..(4+name_len)];
+        let num_parts_bytes = &serialized_data[(4+name_len)..(6+name_len)];
         let num_parts = u16::from_le_bytes(num_parts_bytes.try_into().unwrap());
         // Deserialize parts        
-        let mut remaining_data = &serialized_data[(4+name_len)..];
+        let mut remaining_data = &serialized_data[(6+name_len)..];
         let mut parts = Vec::new();
         for _ in 0..num_parts {
             if remaining_data.len() < 2 {
@@ -180,6 +187,14 @@ impl Serializable for Song {
             parts.push(Part::deserialize(part_bytes)?);
             remaining_data = &remaining_data[(2+part_size)..];
         }
-        Ok(Self { name, parts })
+        Ok(Self { name, bpm, parts })
     }
+}
+
+fn beat_in_seconds(beat: f32, bpm: f32) -> f32 {
+    beat / bpm * 60.0
+}
+
+fn second_in_beats(seconds: f32, bpm: f32) -> f32 {
+    seconds / 60.0 * bpm
 }

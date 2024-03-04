@@ -1,28 +1,32 @@
+use std::fmt::Display;
+
 use super::serializable::Serializable;
 
 /// Represents a certain pitch at a certain time at a certain volume. Is part of a [Part]
 pub struct Note {
-    pub time: f32,
-    pub duration: f32,
+    // what beat it plays on
+    pub beat: f32,  
+    // how long it plays in beats
+    pub duration: f32, 
     pub frequency: f32,
     pub volume: f32
 }
 
 impl Note {
-    pub fn new(time: f32, duration: f32, frequency: f32, volume: f32) -> Result<Self, &'static str> {
+    pub fn new(beat: f32, duration: f32, frequency: f32, volume: f32) -> Result<Self, &'static str> {
         if volume > 1.0 {
             return Err("Note must have volume in range [0, 1]");
         }
-        Ok(Note {time, duration, frequency, volume})
+        Ok(Note {beat, duration, frequency, volume})
     }
 
-    pub fn end_time(&self) -> f32 {
-        self.time + self.duration
+    pub fn end_beat(&self) -> f32 {
+        self.beat + self.duration
     }
 
-    pub fn plays_at(&self, time: f32) -> bool {
-        if time >= self.time && time < self.end_time() {
-            return true;
+    pub fn plays_at(&self, beat: f32) -> bool {
+        if beat >= self.beat && beat < self.end_beat() {
+            return true
         }
         false
     }
@@ -34,14 +38,14 @@ impl Note {
 
 impl Serializable for Note {
     /// Serializes a `Note` struct into a byte representation
-    /// f32: time
+    /// f32: beat
     /// f32: duration
     /// f32: frequency
     /// f32: volume
     fn serialize(&self) -> Result<Vec<u8>, &'static str> {
         let mut serialized_data = Vec::new();
         // Serialize the time
-        let time_bytes = self.time.to_le_bytes();
+        let time_bytes = self.beat.to_le_bytes();
         serialized_data.extend(time_bytes);
         // Serialize the duration
         let dur_bytes = self.duration.to_le_bytes();
@@ -60,8 +64,8 @@ impl Serializable for Note {
             return Err("Invalid serialized data! Insuffient data for note");
         }
         // Deserialize the time
-        let time_bytes = &serialized_data[0..4];
-        let time = f32::from_le_bytes(time_bytes.try_into().unwrap());
+        let beat_bytes = &serialized_data[0..4];
+        let beat = f32::from_le_bytes(beat_bytes.try_into().unwrap());
         // Deserialize the duration
         let dur_bytes = &serialized_data[4..8];
         let duration = f32::from_le_bytes(dur_bytes.try_into().unwrap());
@@ -71,6 +75,12 @@ impl Serializable for Note {
         // Deserialize the volume
         let vol_bytes = &serialized_data[12..16];
         let volume = f32::from_le_bytes(vol_bytes.try_into().unwrap());
-        Ok(Self { time, duration, frequency, volume })
+        Ok(Self { beat, duration, frequency, volume })
+    }
+}
+
+impl Display for Note {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Note(beat: {}, duration: {}, frequency: {}, volume: {})", self.beat, self.duration, self.frequency, self.volume)
     }
 }

@@ -1,10 +1,12 @@
+use std::fmt::Display;
+
 use super::note::Note;
 use super::serializable::Serializable;
 
 /// Represents a musical instrument or part. Can only play one [Note] at a time and multiple Parts are part of a [Song]
 pub struct Part {
-    name: String,
-    notes: Vec<Note>
+    pub name: String,
+    pub notes: Vec<Note>
 }
 
 impl Part {
@@ -13,9 +15,9 @@ impl Part {
     }
 
     // Checks if the part has a note at a certain time
-    pub fn has_note(&self, time: f32) -> Option<&Note> {
+    pub fn has_note_at_beat(&self, beat: f32) -> Option<&Note> {
         for note in &self.notes {
-            if note.plays_at(time) {
+            if note.plays_at(beat) {
                 return Some(note)
             }
         }
@@ -24,7 +26,7 @@ impl Part {
 
     pub fn add_note(&mut self, note: Note) -> Result<(), &'static str>{
         for note_i in &self.notes {
-            if note_i.plays_at(note.time) || note_i.plays_at(note.end_time()) {
+            if note_i.plays_at(note.beat) || note_i.plays_at(note.end_beat()) {
                 return Err("can't add note inside another notes play time");
             }
         }
@@ -35,7 +37,7 @@ impl Part {
     pub fn duration(&self) -> f32 {
         let mut final_note_end: f32 = 0.0;
         for note in &self.notes {
-            let note_end = note.time + note.duration;
+            let note_end = note.end_beat();
             if note_end > final_note_end {
                 final_note_end = note_end;
             }
@@ -50,10 +52,23 @@ impl Default for Part {
         Part { 
             name: "Melody".to_string(),
             notes: vec![
-            Note::new(440.0 /* A */, 0.25, 0.0, 1.0).unwrap(),
-            Note::new(440.0 /* A */, 0.5, 2.0, 1.0).unwrap(),
-            Note::new(293.99, 0.5, 3.0, 1.0 ).unwrap()]
+            Note::new(0.0, 1.0, 440.0, 0.5).unwrap(),
+            Note::new(1.0, 1.0, 440.0, 0.5).unwrap(),
+            Note::new(2.0, 1.0, 293.99, 0.5).unwrap()
+            ]
         }
+    }
+}
+
+impl Display for Part {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "name: {}\n", self.name)?;
+        write!(f, "notes:\n")?;
+        for (index, note) in self.notes.iter().enumerate() {
+            write!(f, "\t{note}\n")?;
+        }
+        write!(f, "\t]");
+        write!(f, "}}")
     }
 }
 

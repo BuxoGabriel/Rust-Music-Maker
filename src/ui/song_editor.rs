@@ -1,6 +1,8 @@
 use std::fs::File;
 use::std::io::{self, Write, Read, BufReader};
-use super::{song::Song, serializable::Serializable};
+use std::rc::Rc;
+use crate::music::{ Serializable, Song, Part, Note };
+use crate::ui::choice_ui::{ui_offer_choices, Choice};
 use crate::wav::WavOptions;
 use rfd::FileDialog;
 
@@ -17,7 +19,7 @@ impl SongEditor {
     pub fn ui(&mut self) {
         println!("Hello! Welcome to Song Maker!");
         'ui: loop {
-            self.show_songs_ui();
+            self.ui_show_songs();
             println!("Select one of the options listed below:");
             println!("\t1. Load Song");
             println!("\t2. Save Song");
@@ -61,10 +63,10 @@ impl SongEditor {
         println!("Goodbye from Song Maker!")
     }
 
-    fn show_songs_ui(&mut self) {
+    fn ui_show_songs(&mut self) {
         println!("Available Songs:");
         for (index, song) in self.loaded_songs.iter().enumerate() {
-            println!("\t{index}. {}", song.name());
+            println!("\t{}. {}", index + 1, song.name);
         }
     }
 
@@ -74,7 +76,7 @@ impl SongEditor {
         let mut song_name = String::new();
         io::stdin().read_line(&mut song_name).expect("Failed to read song name!");
         let song_name = song_name.trim().to_string();
-        if let Some((index, _song)) = self.loaded_songs.iter().enumerate().find(|(_index, song)| song.name().as_str() == song_name) {
+        if let Some((index, _song)) = self.loaded_songs.iter().enumerate().find(|(_index, song)| song.name.as_str() == song_name) {
             println!("A song already exists with this name would you like to overwrite it? (y/n)");
             let mut overwrite = String::new();
             io::stdin().read_line(&mut overwrite).expect("Failed to read user input!");
@@ -88,27 +90,42 @@ impl SongEditor {
                 }
             }
         }
-        self.loaded_songs.push(Song::new(song_name));
+        self.loaded_songs.push(Song::new(song_name, 120));
         println!("Created song!")
     }
 
     fn edit_ui(&mut self) {
         loop {
+            self.ui_show_songs();
             println!("Which song would you like to edit?");
-            let mut edit_index = String::new();
-            io::stdin().read_line(&mut edit_index).expect("Failed to read user input!");
-            let edit_index = edit_index.trim();
-            if let Ok(index) = edit_index.parse::<usize>() {
-                if let Some(_song) = self.loaded_songs.get(index) {
-                    // Editing Song ui
-
-                    // TODO
-                    println!("Editing Song...");
-                    println!("Done editing Song!");
-                    break
+            let mut buf = String::new();
+            io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+            let edit_index = buf.trim();
+            let song_index = edit_index.parse::<usize>().expect("Failed to parse user input as number!") - 1;
+            if let Some(song) = self.loaded_songs.get_mut(song_index) {
+                // Editing Song ui
+                println!("Song name: {}", song.name);
+                println!("Song parts:");
+                let parts = &song.parts;
+                for (index, part) in parts.iter().enumerate() {
+                    println!("\t{}. {}", index + 1, part.name)
                 }
+                println!("Which part would you like to edit?");
+                buf.clear();
+                io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+                let edit_index = buf.trim();
+                let part_index = edit_index.parse::<usize>().expect("Could not parse user input as number!") - 1;
+                if let Some(part) = song.parts.get_mut(part_index) {
+                    ui_edit_part(part);
+                    println!("Done editing Song!");
+                    return;
+                }
+                else {
+                    println!("{part_index} is not a valid song index!")
+                }
+            } else {
+                println!("{song_index} is not a valid song index!")
             }
-            println!("{edit_index} is not a valid song index!")
         } 
     }
 
@@ -158,7 +175,7 @@ impl SongEditor {
             if let Ok(index) = save_index.parse::<usize>() {
                 if let Some(song) = self.loaded_songs.get(index) {
                     println!("saving song...");
-                    song.write_to_song_file(song.name().clone());
+                    song.write_to_song_file(song.name.clone());
                     println!("saving complete!");
                     break
                 }
@@ -177,7 +194,7 @@ impl SongEditor {
                 if let Some(song) = self.loaded_songs.get(index) {
                     println!("Compiling song...");
                     // TODO get wavoptions from user optionally
-                    song.write_to_wav_file(song.name().clone(), &WavOptions::default());
+                    song.write_to_wav_file(song.name.clone(), &WavOptions::default());
                     println!("Compilation complete!");
                     break
                 }
@@ -185,4 +202,71 @@ impl SongEditor {
             println!("{compile_index} is not a valid song index!")
         } 
     }
+}
+
+fn ui_select_song() {
+
+}
+
+fn ui_select_part() {
+
+}
+
+fn ui_select_note() {
+
+}
+
+fn ui_edit_part(part: &mut Part) {
+    println!("Editing part: {}", part.name);
+    println!("Notes:");
+    for note in part.notes.iter() {
+        println!("{}", note);
+    }
+    println!("What would you like to do?");
+    let choices = vec![
+        Choice::new("add note".to_string(), Box::from(ui_add_note)),
+        Choice::new("delete note".to_string(), Box::from(ui_delete_note))
+    ];
+    ui_offer_choices(choices, part);
+}
+
+fn ui_add_note(part: &mut Part) {
+    let mut buf = String::new();
+    // Get beat to play on from user
+    print!("beat to play on: ");
+    io::stdout().flush().unwrap();
+    io::stdin().read_line(&mut buf).unwrap();
+    let beat = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    // Get duration of note in beats from user
+    print!("duration in beats: ");
+    io::stdout().flush().unwrap();
+    buf.clear();
+    io::stdin().read_line(&mut buf).unwrap();
+    let duration = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    // Get frequency of note from user
+    print!("frequency: ");
+    io::stdout().flush().unwrap();
+    buf.clear();
+    io::stdin().read_line(&mut buf).unwrap();
+    let frequency = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    // Get volume of note from user
+    print!("volume: ");
+    io::stdout().flush().unwrap();
+    buf.clear();
+    io::stdin().read_line(&mut buf).unwrap();
+    let volume = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    // Create note from user input
+    let note = Note::new(beat, duration, frequency, volume).expect("Failed to make note!");
+    // Add note to part
+    part.add_note(note).expect("Could not add note to part!");
+}
+
+fn ui_delete_note(part: &mut Part) {
+    println!("{part}");
+    println!("Which note would you like to delete?");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    let note_index = buf.trim().parse::<usize>().unwrap() - 1;
+    part.notes.remove(note_index);
+    println!("Successfully deleted note!")
 }
