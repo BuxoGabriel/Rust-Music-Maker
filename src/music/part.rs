@@ -52,9 +52,9 @@ impl Default for Part {
         Part { 
             name: "Melody".to_string(),
             notes: vec![
-            Note::new(0.0, 1.0, 440.0, 0.5).unwrap(),
-            Note::new(1.0, 1.0, 440.0, 0.5).unwrap(),
-            Note::new(2.0, 1.0, 293.99, 0.5).unwrap()
+            Note::new(0.0, 1.0, 440.0, 0.25).unwrap(),
+            Note::new(2.0, 1.0, 440.0, 0.5).unwrap(),
+            Note::new(3.0, 1.0, 293.99, 0.5).unwrap()
             ]
         }
     }

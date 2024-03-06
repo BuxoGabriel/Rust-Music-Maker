@@ -100,7 +100,7 @@ impl Default for Song {
         _ = base.add_note(Note { frequency: 293.99, volume: 0.25, beat: 1.0, duration: 0.5 });
         _ =base.add_note(Note { frequency: 150.00, volume: 0.25, beat: 1.5, duration: 1.5 });
 
-        Song { name: "Demo Song".to_string(), bpm: 120, parts: vec![Part::default(), base]
+        Song { name: "Demo Song".to_string(), bpm: 60, parts: vec![Part::default(), base]
         }
     }
 }
