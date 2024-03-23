@@ -34,6 +34,10 @@ impl Part {
         Ok(())
     }
 
+    pub fn delete_note(&mut self, index: usize) {
+        self.notes.remove(index);
+    }
+
     pub fn duration(&self) -> f32 {
         let mut final_note_end: f32 = 0.0;
         for note in &self.notes {
