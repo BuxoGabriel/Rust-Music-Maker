@@ -6,7 +6,7 @@
 
 trying to make implementation match specification, in progress
 
-### Songs
+### Song Editor
 
 - add song
 - delete song

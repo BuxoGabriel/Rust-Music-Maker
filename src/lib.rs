@@ -15,6 +15,9 @@ pub mod music {
 }
 
 pub mod ui {
+    mod note_cli;
+    mod part_cli;
+    mod song_cli;
     pub mod choice_ui;
-    pub mod song_edit_cli;
+    pub mod song_editor_cli;
 }
