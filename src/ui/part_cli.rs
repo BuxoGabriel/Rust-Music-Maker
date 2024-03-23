@@ -1,20 +1,26 @@
 use std::io::{self, Write};
 
 use super::choice_ui::{self, Choice};
-use crate::music::{Note, Part};
+use crate::{music::{Note, Part}, ui::note_cli};
 
 pub fn edit_part_ui(part: &mut Part) {
-    println!("Editing part: {}", part.name);
-    println!("Notes:");
-    for note in part.notes.iter() {
-        println!("{}", note);
-    }
-    println!("What would you like to do?");
+    println!("Part Editor: Editing: {}", part.name);
     let choices = vec![
         Choice::new("add note".to_string(), Box::from(add_note_ui)),
-        Choice::new("delete note".to_string(), Box::from(delete_note_ui))
+        Choice::new("delete note".to_string(), Box::from(delete_note_ui)),
+        Choice::new("Change name".to_string(), Box::from(change_name_ui)),
+        // Todo Change Volume
+        Choice::new("edit note".to_string(), Box::from(edit_note_ui))
     ];
     choice_ui::ui_offer_choices(&choices, part);
+}
+
+fn show_notes_ui(part: &Part) {
+    println!("Part Name: {}", part.name);
+    println!("Part Notes:");
+    for (index, note) in part.notes.iter().enumerate() {
+        println!("{}. {}", index + 1, note);
+    }
 }
 
 fn add_note_ui(part: &mut Part) {
@@ -56,4 +62,26 @@ fn delete_note_ui(part: &mut Part) {
     let note_index = buf.trim().parse::<usize>().unwrap() - 1;
     part.notes.remove(note_index);
     println!("Successfully deleted note!")
+}
+
+fn change_name_ui(part: &mut Part) {
+    todo!()
+}
+
+fn edit_note_ui(part: &mut Part) {
+    //  user is presented with options to edit note
+    println!("Which note would you like to edit?");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    let edit_index = buf.trim();
+    let note_index = edit_index.parse::<usize>().expect("Could not parse user input as number!") - 1;
+    if let Some(note) = part.notes.get_mut(note_index) {
+        // If user selects valid note show note edit ui
+        note_cli::edit_note_ui(note);
+        println!("Done editing Note!");
+        return;
+    }
+    else {
+        println!("{note_index} is not a valid note index!");
+    }
 }

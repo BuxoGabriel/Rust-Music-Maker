@@ -2,16 +2,19 @@ use std::{fs::File, io::{self, BufReader, Read, Write}};
 use rfd::FileDialog;
 
 use crate::music::{Serializable, Song, SongEditor};
-use super::{choice_ui::{self, Choice}, song_cli::edit_song_ui};
+use super::{choice_ui::{self, Choice}, song_cli};
 
 pub fn ui(editor: &mut SongEditor) {
     let choices = vec![
-        Choice::new("Load Song".to_string(), Box::from(load_ui)),
-        Choice::new("Create Song".to_string(), Box::from(create_ui)),
-        Choice::new("Edit Song".to_string(), Box::from(edit_ui)),
+        Choice::new("Load Song".to_string(), Box::from(load_song_ui)),
+        Choice::new("Create Song".to_string(), Box::from(create_song_ui)),
+        Choice::new("Delete Song".to_string(), Box::from(delete_song_ui)),
+        Choice::new("Edit Song".to_string(), Box::from(edit_song_ui)),
     ];
     println!("Hello! Welcome to Song Maker!");
     loop {
+        println!("Song Maker: Editing Songs");
+        show_songs_ui(editor);
         if let Some(res) = choice_ui::ui_offer_choices(&choices, editor) {
             if let Err(err) = res {
                 println!("{err}");
@@ -21,10 +24,10 @@ pub fn ui(editor: &mut SongEditor) {
             break
         }
     }
-    println!("Goodbye from Song Maker!")
+    println!("Goodbye!")
 }
 
-fn create_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
+fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
     // Get song name from user
     print!("Song name: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
@@ -55,7 +58,11 @@ fn create_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
     Ok(())
 }
 
-fn load_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
+fn delete_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
+    todo!()
+}
+
+fn load_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     // Get file from the user
     println!("Select a .song file to load");
     // Show file dialog
@@ -96,8 +103,7 @@ fn load_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
     }
 }
 
-fn edit_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
-    show_songs_ui(editor);
+fn edit_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     // User selects song to edit
     println!("Which song would you like to edit?");
     let mut buf = String::new();
@@ -107,8 +113,8 @@ fn edit_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     }
     let edit_index = buf.trim();
     if let Ok(song_index) = edit_index.parse::<usize>() {
-        if let Some(song) = editor.loaded_songs.get_mut(song_index) {
-            edit_song_ui(song);
+        if let Some(song) = editor.loaded_songs.get_mut(song_index - 1) {
+            song_cli::edit_song_ui(song);
             Ok(())
         } else {
             Err("Provided invalid song index")
@@ -120,7 +126,7 @@ fn edit_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
 }
 
 fn show_songs_ui(editor: &mut SongEditor) {
-    println!("Available Songs:");
+    println!("Your Songs:");
     for (index, song) in editor.loaded_songs.iter().enumerate() {
         println!("\t{}. {}", index + 1, song.name);
     }
