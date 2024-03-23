@@ -1,6 +1,11 @@
-use simple_files::ui::SongEditor;
+use simple_files::music
 
 fn main() {
-    let mut song_editor = SongEditor::new();
-    song_editor.ui()
+    MainWindow::new().unwrap().run().unwrap();
+}
+
+slint::slint! {
+    export component MainWindow inherits Window {
+        
+    }
 }

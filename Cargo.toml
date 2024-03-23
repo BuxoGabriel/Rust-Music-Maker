@@ -14,3 +14,4 @@ path = "src/main.rs"
 
 [dependencies]
 rfd = "0.14.0"
+slint = "1.4.1"
