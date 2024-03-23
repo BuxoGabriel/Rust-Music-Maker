@@ -1,4 +1,4 @@
-use simple_files::music
+use simple_files::music;
 
 fn main() {
     MainWindow::new().unwrap().run().unwrap();
