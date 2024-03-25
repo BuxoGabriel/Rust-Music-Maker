@@ -31,15 +31,15 @@ fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
     // Get song name from user
     print!("Song name: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
-    let mut song_name = String::new();
-    io::stdin().read_line(&mut song_name).expect("Failed to read song name!");
-    let song_name = song_name.trim().to_string();
-    // If a song already exists with chosen name ask if they would like to overwrite
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer).expect("Failed to read song name!");
+    let song_name = buffer.trim().to_string();
     if let Some((index, _song)) = editor.loaded_songs.iter().enumerate().find(|(_index, song)| song.name.as_str() == song_name) {
+        // If a song already exists with chosen name ask if they would like to overwrite
         println!("A song already exists with this name would you like to overwrite it? (y/n)");
-        let mut overwrite = String::new();
-        io::stdin().read_line(&mut overwrite).expect("Failed to read user input!");
-        match overwrite.trim() {
+        buffer.clear();
+        io::stdin().read_line(&mut buffer).expect("Failed to read user input!");
+        match buffer.trim() {
             "y" | "yes" | "Y" | "YES" => {
                 // If user decides to overwrite file delete file from memory
                 editor.loaded_songs.remove(index);
@@ -51,11 +51,21 @@ fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
             }
         }
     }
-    // TODO: Get BPM from user
-    // Create new song and add it to editor
-    editor.loaded_songs.push(Song::new(song_name, 120));
-    println!("Created song!");
-    Ok(())
+    buffer.clear();
+    print!("Song BPM: ");
+    io::stdin().read_line(&mut buffer).expect("Failed to read user input!");
+    match buffer.trim().parse::<u16>() {
+        Ok(bpm) => {
+            // Create new song and add it to editor
+            editor.loaded_songs.push(Song::new(song_name, bpm));
+            println!("Created song!");
+            Ok(())
+        },
+        Err(_) => {
+            println!("BPM must be an integer value!");
+            Err("non integer value provided for bpm")
+        }
+    }
 }
 
 fn delete_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
