@@ -12,7 +12,15 @@ pub fn edit_part_ui(part: &mut Part) {
         // Todo Change Volume
         Choice::new("edit note".to_string(), Box::from(edit_note_ui))
     ];
-    choice_ui::ui_offer_choices(&choices, part);
+    loop {
+        println!("Part editor: Editing {}", part.name);
+        show_notes_ui(part);
+        if let Some(_) = choice_ui::ui_offer_choices(&choices, part) {}
+        else {
+            break
+        }
+    }
+    println!("You have left part editor!");
 }
 
 fn show_notes_ui(part: &Part) {
