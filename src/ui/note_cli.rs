@@ -7,7 +7,7 @@ pub fn edit_note_ui(note: &mut Note) {
     let choices = vec![
         Choice::new("Change Starting Beat".to_string(), Box::from(change_note_start_ui)),
         Choice::new("Change Note Duration".to_string(), Box::from(change_note_duration_ui)),
-        Choice::new("Change Note Pitch".to_string(), Box::from(change_note_pitch_ui)),
+        Choice::new("Change Note Frequency".to_string(), Box::from(change_note_pitch_ui)),
         Choice::new("Change Note Volume".to_string(), Box::from(change_note_volume_ui))
     ];
     loop {
@@ -21,7 +21,7 @@ pub fn edit_note_ui(note: &mut Note) {
 }
 
 pub fn change_note_start_ui(note: &mut Note) {
-    print!("Note starting beat: ");
+    print!("New Note starting beat: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
     let mut buf = String::new();
     io::stdin().read_line(&mut buf).expect("Failed to read user input!");
@@ -38,7 +38,7 @@ pub fn change_note_start_ui(note: &mut Note) {
 }
 
 pub fn change_note_duration_ui(note: &mut Note) {
-    print!("Note duration in beats: ");
+    print!("New Note duration in beats: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
     let mut buf = String::new();
     io::stdin().read_line(&mut buf).expect("Failed to read user input!");
@@ -55,7 +55,20 @@ pub fn change_note_duration_ui(note: &mut Note) {
 }
 
 pub fn change_note_pitch_ui(note: &mut Note) {
-    todo!();
+    print!("New Note Frequency");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    match buf.parse::<f32>() {
+        Ok(freq) => {
+            let old_freq = note.frequency;
+            note.frequency = freq;
+            println!("Changed note frequency from {old_freq} to {}!", note.frequency);
+        }
+        Err(_) => {
+            return;
+        }
+    }
 }
 
 pub fn change_note_volume_ui(note: &mut Note) {
