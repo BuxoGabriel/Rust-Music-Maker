@@ -55,7 +55,7 @@ pub fn change_note_duration_ui(note: &mut Note) {
 }
 
 pub fn change_note_pitch_ui(note: &mut Note) {
-    print!("New Note Frequency");
+    print!("New Note Frequency: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
     let mut buf = String::new();
     io::stdin().read_line(&mut buf).expect("Failed to read user input!");
@@ -72,5 +72,18 @@ pub fn change_note_pitch_ui(note: &mut Note) {
 }
 
 pub fn change_note_volume_ui(note: &mut Note) {
-    todo!();
+    print!("New Note Volume: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    match buf.parse::<f32>() {
+        Ok(vol) => {
+            let old_vol = note.volume;
+            note.volume = vol;
+            println!("Changed note volume from {old_vol} to {}!", note.volume);
+        }
+        Err(_) => {
+            return;
+        }
+    }
 }
