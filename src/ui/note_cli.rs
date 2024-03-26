@@ -38,7 +38,20 @@ pub fn change_note_start_ui(note: &mut Note) {
 }
 
 pub fn change_note_duration_ui(note: &mut Note) {
-    todo!();
+    print!("Note duration in beats: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    match buf.parse::<f32>() {
+        Ok(duration) => {
+            let old_dur = note.duration;
+            note.duration = duration;
+            println!("Changed note duration from {old_dur} to {}!", note.duration);
+        }
+        Err(_) => {
+            return;
+        }
+    }
 }
 
 pub fn change_note_pitch_ui(note: &mut Note) {
