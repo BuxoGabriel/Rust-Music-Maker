@@ -69,7 +69,20 @@ fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
 }
 
 fn delete_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
-    todo!()
+    println!("Which song would you like to delete?");
+    let mut buf = String::new();
+    if let Err(_err) = io::stdin().read_line(&mut buf) {
+        println!("Failed to read user input");
+        return Err("Failed to read user input");
+    }
+    let delete_index = buf.trim();
+    if let Ok(song_index) = delete_index.parse::<usize>() {
+        editor.loaded_songs.remove(song_index);
+        Ok(())
+    } else {
+        println!("Failed to parse user input as number!");
+        Err("Failed to parse user input as number!")
+    }
 }
 
 fn load_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {

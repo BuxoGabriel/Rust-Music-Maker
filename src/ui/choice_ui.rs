@@ -16,6 +16,7 @@ impl<Args, Res> Choice<Args, Res> {
 }
 
 pub fn ui_offer_choices<Args, Res>(choices: &Vec<Choice<Args, Res>>, args: &mut Args) -> Option<Res> {
+    println!("Select an action from below:");
     for (index, choice) in choices.iter().enumerate() {
         println!("\t{}. {}", index + 1, choice.prompt)
     }
