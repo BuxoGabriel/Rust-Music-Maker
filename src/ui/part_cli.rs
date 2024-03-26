@@ -4,13 +4,12 @@ use super::choice_ui::{self, Choice};
 use crate::{music::{Note, Part}, ui::note_cli};
 
 pub fn edit_part_ui(part: &mut Part) {
-    println!("Part Editor: Editing: {}", part.name);
     let choices = vec![
-        Choice::new("add note".to_string(), Box::from(add_note_ui)),
-        Choice::new("delete note".to_string(), Box::from(delete_note_ui)),
-        Choice::new("Change name".to_string(), Box::from(change_name_ui)),
+        Choice::new("Add Note".to_string(), Box::from(add_note_ui)),
+        Choice::new("Delete Note".to_string(), Box::from(delete_note_ui)),
+        Choice::new("Change Name".to_string(), Box::from(change_name_ui)),
         // Todo Change Volume
-        Choice::new("edit note".to_string(), Box::from(edit_note_ui))
+        Choice::new("Edit Note".to_string(), Box::from(edit_note_ui))
     ];
     loop {
         println!("Part editor: Editing {}", part.name);
