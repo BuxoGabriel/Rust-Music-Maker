@@ -101,5 +101,19 @@ fn change_name_ui(song: &mut Song) {
 }
 
 fn change_bpm_ui(song: &mut Song) {
-    todo!()
+    // Get new BPM from user
+    print!("New BPM: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    let old_bpm = song.bpm;
+    match buf.parse::<u16>() {
+        Ok(bpm) => {
+            song.bpm = bpm;
+            println!("Changed bpm from {old_bpm} to {}!", song.bpm);
+        },
+        Err(_) => {
+            return
+        }
+    }
 }
