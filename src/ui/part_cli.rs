@@ -73,7 +73,14 @@ fn delete_note_ui(part: &mut Part) {
 }
 
 fn change_name_ui(part: &mut Part) {
-    todo!()
+    // Get new Part name from user
+    print!("New part name: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut buf = String::new();
+    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    let old_name = part.name.clone();
+    part.name = buf.trim().to_string();
+    println!("Changed name from {old_name} to {}!", part.name);
 }
 
 fn edit_note_ui(part: &mut Part) {
