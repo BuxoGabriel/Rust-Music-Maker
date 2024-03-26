@@ -1,6 +1,6 @@
-use std::io;
+use std::io::{self, Write};
 
-use crate::{music::Song, ui::choice_ui::{self, Choice}, wav::WavOptions};
+use crate::{music::{Part, Song}, ui::choice_ui::{self, Choice}, wav::WavOptions};
 
 use super::part_cli;
 
@@ -47,7 +47,14 @@ fn save_song_ui(song: &mut Song) {
 }
 
 fn add_part_ui(song: &mut Song) {
-    todo!()
+    // Get part name
+    print!("Part Name: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    let mut part_name = String::new();
+    io::stdin().read_line(&mut part_name).expect("Failed to read user input!");
+    let part = Part::new(part_name.trim().to_string());
+    song.parts.push(part);
+    println!("Added part!")
 }
 
 fn delete_part_ui(song: &mut Song) {

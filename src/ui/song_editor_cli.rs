@@ -7,7 +7,7 @@ use super::{choice_ui::{self, Choice}, song_cli};
 pub fn ui(editor: &mut SongEditor) {
     let choices = vec![
         Choice::new("Load Song".to_string(), Box::from(load_song_ui)),
-        Choice::new("Create Song".to_string(), Box::from(create_song_ui)),
+        Choice::new("Add Song".to_string(), Box::from(add_song_ui)),
         Choice::new("Delete Song".to_string(), Box::from(delete_song_ui)),
         Choice::new("Edit Song".to_string(), Box::from(edit_song_ui)),
     ];
@@ -27,7 +27,7 @@ pub fn ui(editor: &mut SongEditor) {
     println!("Goodbye!")
 }
 
-fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
+fn add_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
     // Get song name from user
     print!("Song name: ");
     io::stdout().flush().expect("Failed to flush stdout! Exiting!");
@@ -46,13 +46,14 @@ fn create_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
             }
             _ => {
                 // Else fail and return early
-                println!("Create song aborted!");
-                return Err("Create song aborted because didn't overwrite existing song with same name!");
+                println!("Add song aborted!");
+                return Err("Add song aborted because didn't overwrite existing song with same name!");
             }
         }
     }
     buffer.clear();
     print!("Song BPM: ");
+    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
     io::stdin().read_line(&mut buffer).expect("Failed to read user input!");
     match buffer.trim().parse::<u16>() {
         Ok(bpm) => {
