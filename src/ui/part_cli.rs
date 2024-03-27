@@ -14,7 +14,11 @@ pub fn edit_part_ui(part: &mut Part) {
     loop {
         println!("Part editor: Editing {}", part.name);
         show_notes_ui(part);
-        if let Some(_) = choice_ui::ui_offer_choices(&choices, part) {}
+        if let Some(result) = choice_ui::ui_offer_choices(&choices, part) {
+            if let Err(err) = result {
+                println!("{err}");
+            }
+        }
         else {
             break
         }
@@ -30,67 +34,91 @@ fn show_notes_ui(part: &Part) {
     }
 }
 
-fn add_note_ui(part: &mut Part) {
+fn add_note_ui(part: &mut Part) -> Result<(), &'static str>{
     let mut buf = String::new();
     // Get beat to play on from user
     print!("beat to play on: ");
     io::stdout().flush().unwrap();
     io::stdin().read_line(&mut buf).unwrap();
-    let beat = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    let beat: f32 = match buf.trim().parse::<f32>() {
+        Ok(beat) => beat,
+        Err(_) => {
+            return Err("failed to parse user input as float!");
+        }
+    };
     // Get duration of note in beats from user
     print!("duration in beats: ");
     io::stdout().flush().unwrap();
     buf.clear();
     io::stdin().read_line(&mut buf).unwrap();
-    let duration = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    let duration: f32 = match buf.trim().parse::<f32>() {
+        Ok(dur) => dur,
+        Err(_) => return Err("failed to parse user input as float!")
+    };
     // Get frequency of note from user
     print!("frequency: ");
     io::stdout().flush().unwrap();
     buf.clear();
     io::stdin().read_line(&mut buf).unwrap();
-    let frequency = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    let frequency: f32 = match buf.trim().parse::<f32>() {
+        Ok(freq) => freq,
+        Err(_) => return Err("failed to parse user input as float!")
+    };
     // Get volume of note from user
     print!("volume: ");
     io::stdout().flush().unwrap();
     buf.clear();
     io::stdin().read_line(&mut buf).unwrap();
-    let volume = buf.trim().parse::<f32>().expect("failed to parse user input as float!");
+    let volume: f32 = match buf.trim().parse::<f32>() {
+        Ok(vol) => vol,
+        Err(_) => return Err("failed to parse user input as float!")
+    };
     // Create note from user input
     let note = Note::new(beat, duration, frequency, volume).expect("Failed to make note!");
     // Add note to part
     part.add_note(note).expect("Could not add note to part!");
+    Ok(())
 }
 
-fn delete_note_ui(part: &mut Part) {
+fn delete_note_ui(part: &mut Part) -> Result<(), &'static str> {
     println!("Which note would you like to delete?");
     match select_note_ui(part) {
         Ok((index, _note)) => {
             part.notes.remove(index);
-            println!("Successfully deleted note!")
+            println!("Successfully deleted note!");
+            Ok(())
         },
-        Err(_err) => {}
+        Err(err) => Err(err)
     }
 }
 
-fn change_name_ui(part: &mut Part) {
+fn change_name_ui(part: &mut Part) -> Result<(), &'static str> {
     // Get new Part name from user
     print!("New part name: ");
-    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    if let Err(_) = io::stdout().flush() {
+        return Err("Failed to flush stdout! Exiting!");
+    }
     let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    if let Err(_) = io::stdin().read_line(&mut buf) {
+        return Err("Failed to read user input!");
+    }
     let old_name = part.name.clone();
     part.name = buf.trim().to_string();
     println!("Changed name from {old_name} to {}!", part.name);
+    Ok(())
 }
 
-fn edit_note_ui(part: &mut Part) {
+fn edit_note_ui(part: &mut Part) -> Result<(), &'static str> {
     println!("Which note would you like to edit?");
     match select_note_ui(part) {
         Ok((_index, note)) => {
             note_cli::edit_note_ui(note);
             println!("Done editing note!");
+            Ok(())
         },
-        Err(_err) => {}
+        Err(err) => {
+            Err(err)
+        }
     }
 }
 
