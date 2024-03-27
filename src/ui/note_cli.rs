@@ -12,7 +12,11 @@ pub fn edit_note_ui(note: &mut Note) {
     ];
     loop {
         println!("Note editor\nNote: {note}");
-        if let Some(_) = choice_ui::ui_offer_choices(&choices, note) {}
+        if let Some(result) = choice_ui::ui_offer_choices(&choices, note) {
+            if let Err(err) = result {
+                println!("{err}");
+            }
+        }
         else {
             break
         }
