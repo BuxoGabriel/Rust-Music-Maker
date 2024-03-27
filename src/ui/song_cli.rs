@@ -17,7 +17,11 @@ pub fn edit_song_ui(song: &mut Song) {
     loop {
         println!("Song editor: Editing {}", song.name);
         show_parts_ui(song);
-        if let Some(_) = choice_ui::ui_offer_choices(&choices, song) {}
+        if let Some(result) = choice_ui::ui_offer_choices(&choices, song) {
+            if let Err(err) = result {
+                println!("{err}");
+            }
+        }
         else {
             break
         }
@@ -119,7 +123,7 @@ fn change_bpm_ui(song: &mut Song) -> Result<(), &'static str> {
         return Err("Failed to read user input!");
     }
     let old_bpm = song.bpm;
-    match buf.parse::<u16>() {
+    match buf.trim().parse::<u16>() {
         Ok(bpm) => {
             song.bpm = bpm;
             println!("Changed bpm from {old_bpm} to {}!", song.bpm);
