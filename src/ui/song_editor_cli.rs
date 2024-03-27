@@ -159,7 +159,7 @@ fn select_song_ui<'a>(editor: &'a mut SongEditor) -> Result<(usize, &'a mut Song
     }
     match buf.trim().parse::<usize>() {
         Ok(index) => {
-            if let Some(song) = editor.loaded_songs.get_mut(index) {
+            if let Some(song) = editor.loaded_songs.get_mut(index - 1) {
                 Ok((index, song))
             }
             else {

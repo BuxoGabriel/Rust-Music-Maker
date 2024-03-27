@@ -62,13 +62,14 @@ fn add_note_ui(part: &mut Part) {
 }
 
 fn delete_note_ui(part: &mut Part) {
-    println!("{part}");
     println!("Which note would you like to delete?");
-    let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
-    let note_index = buf.trim().parse::<usize>().unwrap() - 1;
-    part.notes.remove(note_index);
-    println!("Successfully deleted note!")
+    match select_note_ui(part) {
+        Ok((index, _note)) => {
+            part.notes.remove(index);
+            println!("Successfully deleted note!")
+        },
+        Err(_err) => {}
+    }
 }
 
 fn change_name_ui(part: &mut Part) {
@@ -83,19 +84,36 @@ fn change_name_ui(part: &mut Part) {
 }
 
 fn edit_note_ui(part: &mut Part) {
-    //  user is presented with options to edit note
     println!("Which note would you like to edit?");
-    let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
-    let edit_index = buf.trim();
-    let note_index = edit_index.parse::<usize>().expect("Could not parse user input as number!") - 1;
-    if let Some(note) = part.notes.get_mut(note_index) {
-        // If user selects valid note show note edit ui
-        note_cli::edit_note_ui(note);
-        println!("Done editing Note!");
-        return;
+    match select_note_ui(part) {
+        Ok((_index, note)) => {
+            note_cli::edit_note_ui(note);
+            println!("Done editing note!");
+        },
+        Err(_err) => {}
     }
-    else {
-        println!("{note_index} is not a valid note index!");
+}
+
+fn select_note_ui<'a>(part: &'a mut Part) -> Result<(usize, &'a mut Note), &'static str> {
+    print!("Select a note by number: ");
+    io::stdout().flush().expect("Stdout failed to flush! Exiting!");
+    let mut buf = String::new();
+    if let Err(_err) = io::stdin().read_line(&mut buf) {
+        println!("Failed to read user input");
+        return Err("Failed to read user input");
+    }
+    match buf.trim().parse::<usize>() {
+        Ok(index) => {
+            if let Some(note) = part.notes.get_mut(index - 1) {
+                Ok((index, note))
+            }
+            else {
+                Err("Failed to parse index as part or a part name!")
+            }
+        },
+        Err(_) => {
+            println!("Failed to parse input as part index!");
+            Err("Failed to parse input as part index!")
+        }
     }
 }

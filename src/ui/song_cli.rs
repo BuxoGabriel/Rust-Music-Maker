@@ -126,7 +126,7 @@ fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'sta
     }
     match buf.trim().parse::<usize>() {
         Ok(index) => {
-            if let Some(part) = song.parts.get_mut(index) {
+            if let Some(part) = song.parts.get_mut(index - 1) {
                 Ok((index, part))
             }
             else {
