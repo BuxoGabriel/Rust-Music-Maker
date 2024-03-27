@@ -39,11 +39,18 @@ impl Song {
             let time = i as f32 / options.sample_rate as f32;
             let mut sample_amplitude: i16 = 0;
             for part in &self.parts {
-                match part.has_note_at_beat(second_in_beats(time, self.bpm as f32)) {
-                    Some(note) => {
-                        sample_amplitude += note.get_sample_amplitude(time)
-                    },
-                    None => ()
+                if let Some(note) = part.has_note_at_beat(second_in_beats(time, self.bpm as f32)) {
+                    sample_amplitude = match sample_amplitude.checked_add(note.get_sample_amplitude(time)) {
+                        Some(sum) => sum,
+                        None => {
+                            if sample_amplitude > 0 {
+                                crate::wav::MAX_AMPLITUDE
+                            }
+                            else {
+                                -crate::wav::MAX_AMPLITUDE
+                            }
+                        }
+                    }
                 };
             }
             samples.push(sample_amplitude);
