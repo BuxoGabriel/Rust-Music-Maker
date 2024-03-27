@@ -33,77 +33,100 @@ fn show_parts_ui(song: &Song) {
     }
 }
 
-fn compile_song_ui(song: &mut Song) {
+fn compile_song_ui(song: &mut Song) -> Result<(), &'static str> {
     println!("Compiling song...");
     // TODO get wavoptions from user optionally
-    song.write_to_wav_file(song.name.clone(), &WavOptions::default());
+    let result = song.write_to_wav_file(song.name.clone(), &WavOptions::default());
     println!("Compilation complete!");
+    result
 }
 
-fn save_song_ui(song: &mut Song) {
-    println!("saving song...");
-    song.write_to_song_file(song.name.clone());
-    println!("saving complete!");
+fn save_song_ui(song: &mut Song) -> Result<(), &'static str>{
+    println!("Saving song...");
+    match song.write_to_song_file(song.name.clone()) {
+        Ok(()) => {
+            println!("Saving complete!");
+            Ok(())
+        },
+        Err(err) => Err(err)
+    }
 }
 
-fn add_part_ui(song: &mut Song) {
+fn add_part_ui(song: &mut Song) -> Result<(), &'static str> {
     // Get part name
     print!("Part Name: ");
-    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    if let Err(_) = io::stdout().flush() {
+        return Err("Failed to flush stdout! Exiting!");
+    }
     let mut part_name = String::new();
-    io::stdin().read_line(&mut part_name).expect("Failed to read user input!");
+    if let Err(err) = io::stdin().read_line(&mut part_name) {
+        return Err("Failed to read user input!");
+    }
     let part = Part::new(part_name.trim().to_string());
     song.parts.push(part);
-    println!("Added part!")
+    println!("Added part!");
+    Ok(())
 }
 
-fn delete_part_ui(song: &mut Song) {
+fn delete_part_ui(song: &mut Song) -> Result<(), &'static str>{
     println!("Which part would you like to delete?");
     match select_part_ui(song) {
         Ok((index, _part)) => {
             song.parts.remove(index);
+            Ok(())
         }
-        Err(_err) => {}
+        Err(err) => Err(err)
     }
 }
 
-fn edit_part_ui(song: &mut Song) {
+fn edit_part_ui(song: &mut Song) -> Result<(), &'static str>{
     //  user is presented with options to edit part
     println!("Which part would you like to edit?");
     match select_part_ui(song) {
         Ok((_index, part)) => {
             part_cli::edit_part_ui(part);
             println!("Done editing Song!");
+            Ok(())
         },
-        Err(_err) => {}
+        Err(err) => Err(err)
     }
 }
 
-fn change_name_ui(song: &mut Song) {
+fn change_name_ui(song: &mut Song) -> Result<(), &'static str> {
     // Get new Song name from user
     print!("New song name: ");
-    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    if let Err(_) = io::stdout().flush() {
+        return Err("Failed to flush stdout! Exiting!");
+    }
     let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    if let Err(_) = io::stdin().read_line(&mut buf) {
+        return Err("Failed to read user input!");
+    }
     let old_name = song.name.clone();
     song.name = buf.trim().to_string();
     println!("Changed name from {old_name} to {}!", song.name);
+    Ok(())
 }
 
-fn change_bpm_ui(song: &mut Song) {
+fn change_bpm_ui(song: &mut Song) -> Result<(), &'static str> {
     // Get new BPM from user
     print!("New BPM: ");
-    io::stdout().flush().expect("Failed to flush stdout! Exiting!");
+    if let Err(_) = io::stdout().flush() {
+        return Err("Failed to flush stdout! Exiting!");
+    }
     let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+    if let Err(_) = io::stdin().read_line(&mut buf) {
+        return Err("Failed to read user input!");
+    }
     let old_bpm = song.bpm;
     match buf.parse::<u16>() {
         Ok(bpm) => {
             song.bpm = bpm;
             println!("Changed bpm from {old_bpm} to {}!", song.bpm);
+            Ok(())
         },
         Err(_) => {
-            return
+            return Err("Failed to parse provided bpm as an integer!")
         }
     }
 }
