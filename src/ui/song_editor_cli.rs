@@ -71,18 +71,12 @@ fn add_song_ui(editor: &mut SongEditor) -> Result<(), &'static str>{
 
 fn delete_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     println!("Which song would you like to delete?");
-    let mut buf = String::new();
-    if let Err(_err) = io::stdin().read_line(&mut buf) {
-        println!("Failed to read user input");
-        return Err("Failed to read user input");
-    }
-    let delete_index = buf.trim();
-    if let Ok(song_index) = delete_index.parse::<usize>() {
-        editor.loaded_songs.remove(song_index);
-        Ok(())
-    } else {
-        println!("Failed to parse user input as number!");
-        Err("Failed to parse user input as number!")
+    match select_song_ui(editor) {
+        Ok((index, _)) => {
+            editor.loaded_songs.remove(index);
+            Ok(())
+        },
+        Err(err) => Err(err)
     }
 }
 
@@ -130,22 +124,13 @@ fn load_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
 fn edit_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     // User selects song to edit
     println!("Which song would you like to edit?");
-    let mut buf = String::new();
-    if let Err(_err) = io::stdin().read_line(&mut buf) {
-        println!("Failed to read user input");
-        return Err("Failed to read user input");
-    }
-    let edit_index = buf.trim();
-    if let Ok(song_index) = edit_index.parse::<usize>() {
-        if let Some(song) = editor.loaded_songs.get_mut(song_index - 1) {
+    match select_song_ui(editor) {
+        Ok((_, song)) => {
             song_cli::edit_song_ui(song);
+            println!("Done editing song!");
             Ok(())
-        } else {
-            Err("Provided invalid song index")
-        }
-    } else {
-        println!("Failed to parse user input as number!");
-        Err("Failed to parse user input as number!")
+        },
+        Err(err) => Err(err)
     }
 }
 
@@ -153,5 +138,37 @@ fn show_songs_ui(editor: &mut SongEditor) {
     println!("Your Songs:");
     for (index, song) in editor.loaded_songs.iter().enumerate() {
         println!("\t{}. {}", index + 1, song.name);
+    }
+}
+
+fn select_song_ui<'a>(editor: &'a mut SongEditor) -> Result<(usize, &'a mut Song), &'static str> {
+    print!("Select a song by name or number: ");
+    io::stdout().flush().expect("Stdout failed to flush! Exiting!");
+    let mut buf = String::new();
+    if let Err(_err) = io::stdin().read_line(&mut buf) {
+        println!("Failed to read user input");
+        return Err("Failed to read user input");
+    }
+    if let Some((index, _)) = editor.loaded_songs.iter().enumerate().find(|(_, song)| song.name == buf) {
+        if let Some(song) = editor.loaded_songs.get_mut(index) {
+            return Ok((index, song))
+        }
+        else {
+            return Err("Failed to parse index as song or a song name!")
+        }
+    }
+    match buf.trim().parse::<usize>() {
+        Ok(index) => {
+            if let Some(song) = editor.loaded_songs.get_mut(index) {
+                Ok((index, song))
+            }
+            else {
+                Err("Failed to parse index as song or a song name!")
+            }
+        },
+        Err(_) => {
+            println!("Not a recognised song!");
+            Err("Failed to parse index as song or a song name!")
+        }
     }
 }

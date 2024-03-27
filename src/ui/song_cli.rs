@@ -12,7 +12,7 @@ pub fn edit_song_ui(song: &mut Song) {
         Choice::new("Delete Part".to_string(), Box::from(delete_part_ui)),
         Choice::new("Edit Part".to_string(), Box::from(edit_part_ui)),
         Choice::new("Change Name".to_string(), Box::from(change_name_ui)),
-        Choice::new("Change BPM".to_string(), Box::from(change_bpm_ui)),
+        Choice::new("Change BPM(Beats Per Minute)".to_string(), Box::from(change_bpm_ui)),
     ];
     loop {
         println!("Song editor: Editing {}", song.name);
@@ -59,33 +59,23 @@ fn add_part_ui(song: &mut Song) {
 
 fn delete_part_ui(song: &mut Song) {
     println!("Which part would you like to delete?");
-    let mut buf = String::new();
-    if let Err(_err) = io::stdin().read_line(&mut buf) {
-        println!("Failed to read user input");
-    }
-    let delete_index = buf.trim();
-    if let Ok(part_index) = delete_index.parse::<usize>() {
-        song.parts.remove(part_index);
-    } else {
-        println!("Failed to parse user input as number!");
+    match select_part_ui(song) {
+        Ok((index, _part)) => {
+            song.parts.remove(index);
+        }
+        Err(_err) => {}
     }
 }
 
 fn edit_part_ui(song: &mut Song) {
     //  user is presented with options to edit part
     println!("Which part would you like to edit?");
-    let mut buf = String::new();
-    io::stdin().read_line(&mut buf).expect("Failed to read user input!");
-    let edit_index = buf.trim();
-    let part_index = edit_index.parse::<usize>().expect("Could not parse user input as number!") - 1;
-    if let Some(part) = song.parts.get_mut(part_index) {
-        // If user selects valid part show part edit ui
-        part_cli::edit_part_ui(part);
-        println!("Done editing Song!");
-        return;
-    }
-    else {
-        println!("{part_index} is not a valid song index!");
+    match select_part_ui(song) {
+        Ok((_index, part)) => {
+            part_cli::edit_part_ui(part);
+            println!("Done editing Song!");
+        },
+        Err(_err) => {}
     }
 }
 
@@ -114,6 +104,38 @@ fn change_bpm_ui(song: &mut Song) {
         },
         Err(_) => {
             return
+        }
+    }
+}
+
+fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'static str> {
+    print!("Select a part by name or number: ");
+    io::stdout().flush().expect("Stdout failed to flush! Exiting!");
+    let mut buf = String::new();
+    if let Err(_err) = io::stdin().read_line(&mut buf) {
+        println!("Failed to read user input");
+        return Err("Failed to read user input");
+    }
+    if let Some((index, _)) = song.parts.iter().enumerate().find(|(_, part)| part.name == buf) {
+        if let Some(part) = song.parts.get_mut(index) {
+            return Ok((index, part))
+        }
+        else {
+            return Err("Failed to parse index as part or a part name!")
+        }
+    }
+    match buf.trim().parse::<usize>() {
+        Ok(index) => {
+            if let Some(part) = song.parts.get_mut(index) {
+                Ok((index, part))
+            }
+            else {
+                Err("Failed to parse index as part or a part name!")
+            }
+        },
+        Err(_) => {
+            println!("Not a recognised part!");
+            Err("Failed to parse index as part or a part name!")
         }
     }
 }
