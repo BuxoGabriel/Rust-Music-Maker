@@ -133,7 +133,7 @@ fn select_note_ui<'a>(part: &'a mut Part) -> Result<(usize, &'a mut Note), &'sta
     match buf.trim().parse::<usize>() {
         Ok(index) => {
             if let Some(note) = part.notes.get_mut(index - 1) {
-                Ok((index, note))
+                Ok((index - 1, note))
             }
             else {
                 Err("Failed to parse index as part or a part name!")

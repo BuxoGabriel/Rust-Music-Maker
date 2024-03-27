@@ -59,7 +59,7 @@ fn add_part_ui(song: &mut Song) -> Result<(), &'static str> {
         return Err("Failed to flush stdout! Exiting!");
     }
     let mut part_name = String::new();
-    if let Err(err) = io::stdin().read_line(&mut part_name) {
+    if let Err(_) = io::stdin().read_line(&mut part_name) {
         return Err("Failed to read user input!");
     }
     let part = Part::new(part_name.trim().to_string());
@@ -139,18 +139,19 @@ fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'sta
         println!("Failed to read user input");
         return Err("Failed to read user input");
     }
+    let buf = buf.trim();
     if let Some((index, _)) = song.parts.iter().enumerate().find(|(_, part)| part.name == buf) {
         if let Some(part) = song.parts.get_mut(index) {
-            return Ok((index, part))
+            return Ok((index - 1, part))
         }
         else {
             return Err("Failed to parse index as part or a part name!")
         }
     }
-    match buf.trim().parse::<usize>() {
+    match buf.parse::<usize>() {
         Ok(index) => {
             if let Some(part) = song.parts.get_mut(index - 1) {
-                Ok((index, part))
+                Ok((index - 1, part))
             }
             else {
                 Err("Failed to parse index as part or a part name!")

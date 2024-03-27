@@ -149,18 +149,19 @@ fn select_song_ui<'a>(editor: &'a mut SongEditor) -> Result<(usize, &'a mut Song
         println!("Failed to read user input");
         return Err("Failed to read user input");
     }
+    let buf = buf.trim();
     if let Some((index, _)) = editor.loaded_songs.iter().enumerate().find(|(_, song)| song.name == buf) {
         if let Some(song) = editor.loaded_songs.get_mut(index) {
-            return Ok((index, song))
+            return Ok((index - 1, song))
         }
         else {
             return Err("Failed to parse index as song or a song name!")
         }
     }
-    match buf.trim().parse::<usize>() {
+    match buf.parse::<usize>() {
         Ok(index) => {
             if let Some(song) = editor.loaded_songs.get_mut(index - 1) {
-                Ok((index, song))
+                Ok((index - 1, song))
             }
             else {
                 Err("Failed to parse index as song or a song name!")
