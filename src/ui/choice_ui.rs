@@ -15,7 +15,7 @@ impl<Args, Res> Choice<Args, Res> {
     }
 }
 
-pub fn ui_offer_choices<Args, Res>(choices: &Vec<Choice<Args, Res>>, args: &mut Args) -> Option<Res> {
+pub fn ui_offer_choices<Args, Res>(choices: &Vec<Choice<Args, Res>>, args: &mut Args) -> Result<Option<Res>, &'static str> {
     println!("Select an action from below:");
     for (index, choice) in choices.iter().enumerate() {
         println!("\t{}. {}", index + 1, choice.prompt)
@@ -24,14 +24,21 @@ pub fn ui_offer_choices<Args, Res>(choices: &Vec<Choice<Args, Res>>, args: &mut 
     let mut buf = String::new();
     loop {
         buf.clear();
-        io::stdin().read_line(&mut buf).expect("Failed to read user input!");
+        if let Err(_) = io::stdin().read_line(&mut buf) {
+            return Err("Failed to read user input!")
+        }
         let buf = buf.trim();
         if buf == "q" {
-            return None;
+            return Ok(None);
         }
-        let choice_number = buf.parse::<usize>().expect("failed to parse user input as number!") - 1;
+        let choice_number = match buf.parse::<usize>() {
+            Ok(number) => number - 1,
+            Err(_) => {
+                return Err("failed to parse user input as number!")
+            }
+        };
         if choice_number < choices.len() {
-            return Some(choices[choice_number].call(args));
+            return Ok(Some(choices[choice_number].call(args)));
         }
         else {
             println!("{} was not recognized as an available option! Try again or press 'q' to quit!", choice_number)

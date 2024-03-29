@@ -14,8 +14,13 @@ pub fn edit_part_ui(part: &mut Part) {
     loop {
         println!("Part editor: Editing {}", part.name);
         show_notes_ui(part);
-        if let Some(result) = choice_ui::ui_offer_choices(&choices, part) {
-            if let Err(err) = result {
+        let result = choice_ui::ui_offer_choices(&choices, part);
+        if let Err(err) = result {
+            println!("{err}");
+            continue
+        }
+        if let Some(res) = result.unwrap() {
+            if let Err(err) = res {
                 println!("{err}");
             }
         }

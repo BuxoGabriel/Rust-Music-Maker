@@ -17,8 +17,13 @@ pub fn edit_song_ui(song: &mut Song) {
     loop {
         println!("Song editor: Editing {}", song.name);
         show_parts_ui(song);
-        if let Some(result) = choice_ui::ui_offer_choices(&choices, song) {
-            if let Err(err) = result {
+        let result = choice_ui::ui_offer_choices(&choices, song);
+        if let Err(err) = result {
+            println!("{err}");
+            continue
+        }
+        if let Some(res) = result.unwrap() {
+            if let Err(err) = res {
                 println!("{err}");
             }
         }

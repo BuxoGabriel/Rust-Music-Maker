@@ -15,7 +15,12 @@ pub fn ui(editor: &mut SongEditor) {
     loop {
         println!("Song Maker: Editing Songs");
         show_songs_ui(editor);
-        if let Some(res) = choice_ui::ui_offer_choices(&choices, editor) {
+        let result = choice_ui::ui_offer_choices(&choices, editor);
+        if let Err(err) = result {
+            println!("{err}");
+            continue
+        }
+        if let Some(res) = result.unwrap() {
             if let Err(err) = res {
                 println!("{err}");
             }
