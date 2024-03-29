@@ -68,10 +68,10 @@ impl Display for Part {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "name: {}\n", self.name)?;
         write!(f, "notes:\n")?;
-        for (index, note) in self.notes.iter().enumerate() {
+        for note in self.notes.iter() {
             write!(f, "\t{note}\n")?;
         }
-        write!(f, "\t]");
+        write!(f, "\t]")?;
         write!(f, "}}")
     }
 }

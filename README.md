@@ -4,35 +4,35 @@
 
 ## UI Specification
 
-trying to make implementation match specification, in progress
+Ui implementation should match this specification
 
-### Songs
+### Song Editor
 
+- load song
 - add song
 - delete song
-- load song
 - edit song
 
 ___
 
 ### Song
 
-- compile song
+- export song to .wav file
 - save song
 - add part
 - delete part
+- edit part
 - change name
 - change bpm
-- edit part
 
 ___
 
 ### Part
 
-- add part
-- delete part
+- add note
+- delete note
 - change name
-- change volume
+- change volume(TODO)
 - edit note
 
 ___

@@ -39,11 +39,18 @@ impl Song {
             let time = i as f32 / options.sample_rate as f32;
             let mut sample_amplitude: i16 = 0;
             for part in &self.parts {
-                match part.has_note_at_beat(second_in_beats(time, self.bpm as f32)) {
-                    Some(note) => {
-                        sample_amplitude += note.get_sample_amplitude(time)
-                    },
-                    None => ()
+                if let Some(note) = part.has_note_at_beat(second_in_beats(time, self.bpm as f32)) {
+                    sample_amplitude = match sample_amplitude.checked_add(note.get_sample_amplitude(time)) {
+                        Some(sum) => sum,
+                        None => {
+                            if sample_amplitude > 0 {
+                                crate::wav::MAX_AMPLITUDE
+                            }
+                            else {
+                                -crate::wav::MAX_AMPLITUDE
+                            }
+                        }
+                    }
                 };
             }
             samples.push(sample_amplitude);
@@ -61,7 +68,7 @@ impl Song {
         bytes
     }
 
-    pub fn write_to_wav_file(&self, file_name: String, options: &WavOptions) {
+    pub fn write_to_wav_file(&self, file_name: String, options: &WavOptions) -> Result<(), &'static str> {
         let mut file_name = String::from(file_name);
         file_name.push_str(".wav");
         println!("Writing to file {file_name}!");
@@ -70,24 +77,29 @@ impl Song {
         let data_size: u32 = (self.duration() * (options.bits_per_sample as u32 * options.sample_rate * options.num_channels as u32) as f32 / 8.0) as u32;
 
         let header = WavHeader::new(data_size, &options);
-        let _ = file.write_all(header.as_bytes());
+        if let Err(_) = file.write_all(header.as_bytes()) {
+            return Err("Failed to write to file!");
+        }
 
-        let _ = file.write_all(&self.compile_parts_into_bytes(options));
+        if let Err(_) = file.write_all(&self.compile_parts_into_bytes(options)) {
+            return Err("Failed to write to file!");
+        }
+        Ok(())
     }
 
-    pub fn write_to_song_file(&self, mut file_name: String) {
+    pub fn write_to_song_file(&self, mut file_name: String) -> Result<(), &'static str> {
         file_name.push_str(".song");
         println!("Writing to file {file_name}!");
         let mut file = File::create(file_name.as_str()).expect("Failed to create file");
-        match &self.serialize() {
+        match self.serialize() {
             Ok(serialized_data) => {
                 if let Err(_e) = file.write_all(&serialized_data) {
-                    println!("Failed to write serialized data!");
-                    return;
+                    return Err("Failed to write serialized data to file!");
                 }
+                Ok(())
             }
             Err(err) => {
-                println!("{err}");
+                Err(err)
             }
         }
     }
