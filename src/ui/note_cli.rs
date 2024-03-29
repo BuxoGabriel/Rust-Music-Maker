@@ -7,7 +7,7 @@ pub fn edit_note_ui(note: &mut Note) {
     let choices = vec![
         Choice::new("Change Starting Beat".to_string(), Box::from(change_note_start_ui)),
         Choice::new("Change Note Duration".to_string(), Box::from(change_note_duration_ui)),
-        Choice::new("Change Note Frequency".to_string(), Box::from(change_note_pitch_ui)),
+        Choice::new("Change Note Pitch".to_string(), Box::from(change_note_pitch_ui)),
         Choice::new("Change Note Volume".to_string(), Box::from(change_note_volume_ui))
     ];
     loop {
