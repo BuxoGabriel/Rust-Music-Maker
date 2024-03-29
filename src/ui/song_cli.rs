@@ -144,7 +144,7 @@ fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'sta
         return Err("Failed to read user input");
     }
     let buf = buf.trim();
-    if let Some((index, _)) = song.parts.iter().enumerate().find(|(_, part)| part.name == buf) {
+    if let Some((index, _)) = song.parts.iter().enumerate().find(|(_, part)| part.name.to_lowercase() == buf.to_lowercase()) {
         if let Some(part) = song.parts.get_mut(index) {
             return Ok((index, part))
         }
@@ -162,7 +162,6 @@ fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'sta
             }
         },
         Err(_) => {
-            println!("Not a recognised part!");
             Err("Failed to parse index as part or a part name!")
         }
     }

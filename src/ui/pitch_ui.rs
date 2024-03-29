@@ -151,7 +151,7 @@ fn freq_from_str(note: &str) -> Option<f32> {
     let octave = octave?.to_string().parse::<u8>();
     if let Ok(octave) = octave {
         if octave >= 1 && octave <= 7 {
-            Some(base_freq? * (2_u8.pow((octave).into()) as f32))
+            Some(base_freq? * (2_u8.pow(octave.into()) as f32))
         }
         else {
             None

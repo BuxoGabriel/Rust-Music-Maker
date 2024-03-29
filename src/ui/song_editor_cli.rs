@@ -150,7 +150,7 @@ fn select_song_ui<'a>(editor: &'a mut SongEditor) -> Result<(usize, &'a mut Song
         return Err("Failed to read user input");
     }
     let buf = buf.trim();
-    if let Some((index, _)) = editor.loaded_songs.iter().enumerate().find(|(_, song)| song.name == buf) {
+    if let Some((index, _)) = editor.loaded_songs.iter().enumerate().find(|(_, song)| song.name.to_lowercase() == buf.to_lowercase()) {
         if let Some(song) = editor.loaded_songs.get_mut(index) {
             return Ok((index, song))
         }
