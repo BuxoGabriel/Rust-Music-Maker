@@ -146,7 +146,7 @@ fn select_part_ui<'a>(song: &'a mut Song) -> Result<(usize, &'a mut Part), &'sta
     let buf = buf.trim();
     if let Some((index, _)) = song.parts.iter().enumerate().find(|(_, part)| part.name == buf) {
         if let Some(part) = song.parts.get_mut(index) {
-            return Ok((index - 1, part))
+            return Ok((index, part))
         }
         else {
             return Err("Failed to parse index as part or a part name!")

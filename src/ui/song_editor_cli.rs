@@ -152,7 +152,7 @@ fn select_song_ui<'a>(editor: &'a mut SongEditor) -> Result<(usize, &'a mut Song
     let buf = buf.trim();
     if let Some((index, _)) = editor.loaded_songs.iter().enumerate().find(|(_, song)| song.name == buf) {
         if let Some(song) = editor.loaded_songs.get_mut(index) {
-            return Ok((index - 1, song))
+            return Ok((index, song))
         }
         else {
             return Err("Failed to parse index as song or a song name!")

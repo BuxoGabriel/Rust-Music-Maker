@@ -18,6 +18,7 @@ pub mod ui {
     mod note_cli;
     mod part_cli;
     mod song_cli;
+    mod pitch_ui;
     pub mod choice_ui;
     pub mod song_editor_cli;
 }

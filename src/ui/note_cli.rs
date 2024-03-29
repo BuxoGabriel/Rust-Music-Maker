@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use crate::music::Note;
-use super::choice_ui::{Choice, self};
+use super::{choice_ui::{self, Choice}, pitch_ui::select_note_ui};
 
 pub fn edit_note_ui(note: &mut Note) {
     let choices = vec![
@@ -69,23 +69,15 @@ pub fn change_note_duration_ui(note: &mut Note) -> Result<(), &'static str> {
 }
 
 pub fn change_note_pitch_ui(note: &mut Note) -> Result<(), &'static str>{
-    print!("New Note Frequency: ");
-    if let Err(_) = io::stdout().flush() {
-        return Err("Failed to flush stdout! Exiting!");
-    }
-    let mut buf = String::new();
-    if let Err(_) = io::stdin().read_line(&mut buf) {
-        return Err("Failed to read user input!")
-    }
-    match buf.trim().parse::<f32>() {
+    match select_note_ui() {
         Ok(freq) => {
             let old_freq = note.frequency;
             note.frequency = freq;
             println!("Changed note frequency from {old_freq} to {}!", note.frequency);
             Ok(())
-        }
+        },
         Err(_) => {
-            return Err("Failed to parse user input as frequency!");
+            Err("User input could not be parsed as a valid string")
         }
     }
 }

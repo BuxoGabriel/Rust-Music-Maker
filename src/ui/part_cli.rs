@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 
 use super::choice_ui::{self, Choice};
-use crate::{music::{Note, Part}, ui::note_cli};
+use crate::{music::{Note, Part}, ui::{note_cli, pitch_ui}};
 
 pub fn edit_part_ui(part: &mut Part) {
     let choices = vec![
@@ -56,14 +56,10 @@ fn add_note_ui(part: &mut Part) -> Result<(), &'static str>{
         Err(_) => return Err("failed to parse user input as float!")
     };
     // Get frequency of note from user
-    print!("frequency: ");
-    io::stdout().flush().unwrap();
-    buf.clear();
-    io::stdin().read_line(&mut buf).unwrap();
-    let frequency: f32 = match buf.trim().parse::<f32>() {
-        Ok(freq) => freq,
-        Err(_) => return Err("failed to parse user input as float!")
-    };
+    let frequency = pitch_ui::select_note_ui();
+    if let Err(err) = frequency {
+        return Err(err);
+    }
     // Get volume of note from user
     print!("volume: ");
     io::stdout().flush().unwrap();
@@ -74,7 +70,7 @@ fn add_note_ui(part: &mut Part) -> Result<(), &'static str>{
         Err(_) => return Err("failed to parse user input as float!")
     };
     // Create note from user input
-    let note = Note::new(beat, duration, frequency, volume).expect("Failed to make note!");
+    let note = Note::new(beat, duration, frequency.unwrap(), volume).expect("Failed to make note!");
     // Add note to part
     part.add_note(note).expect("Could not add note to part!");
     Ok(())
