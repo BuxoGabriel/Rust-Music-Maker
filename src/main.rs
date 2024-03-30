@@ -1,11 +1,12 @@
-use simple_files::music;
+use song_maker::music::SongEditor;
 
-fn main() {
-    MainWindow::new().unwrap().run().unwrap();
-}
+slint::include_modules!();
+fn main() -> Result<(), slint::PlatformError> {
+    let mut song_editor = SongEditor::new();
+    let ui = AppWindow::new()?;
+    ui.on_load_song(move || {
+        song_editor.load_song().unwrap();
+    });
 
-slint::slint! {
-    export component MainWindow inherits Window {
-        
-    }
+    ui.run()
 }

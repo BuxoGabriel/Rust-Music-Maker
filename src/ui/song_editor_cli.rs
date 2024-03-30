@@ -1,7 +1,6 @@
-use std::{fs::File, io::{self, BufReader, Read, Write}};
-use rfd::FileDialog;
+use std::io::{self, Write};
 
-use crate::music::{Serializable, Song, SongEditor};
+use crate::music::{Song, SongEditor};
 use super::{choice_ui::{self, Choice}, song_cli};
 
 pub fn ui(editor: &mut SongEditor) {
@@ -89,41 +88,7 @@ fn load_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {
     // Get file from the user
     println!("Select a .song file to load");
     // Show file dialog
-    let file = FileDialog::new()
-        .add_filter("songs", &["song"])
-        .set_directory("/")
-        .pick_file();
-    if let Some(file_path) = file {
-        // If there is a file then deserialize it and load it into memory
-        if let Ok(f) = File::open(&file_path) {
-            let mut buf_reader = BufReader::new(f);
-            let mut serialized_data: Vec<u8> = Vec::new();
-            if let Err(_err) = buf_reader.read_to_end(&mut serialized_data) {
-                println!("could not read from file!");
-                return Err("could not read from file!");
-            }
-            // Attempt to deserialize song from file
-            match Song::deserialize(&serialized_data) {
-                Ok(song) => {
-                    editor.loaded_songs.push(song);
-                    println!("Loaded Song!");
-                    Ok(())
-                }
-                Err(err) => {
-                    println!("{err}");
-                    Err(err)
-                }
-            }
-        }
-        else {
-            println!("failed to open file");
-            Err("failed to open file")
-        }
-    }
-    else {
-        println!("No files selected or file failed to open!");
-        Err("No files selected or file failed to open!")
-    }
+    editor.load_song()
 }
 
 fn edit_song_ui(editor: &mut SongEditor) -> Result<(), &'static str> {

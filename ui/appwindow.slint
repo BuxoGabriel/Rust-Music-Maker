@@ -1,0 +1,14 @@
+import { SongSelect } from "songselect.slint";
+
+export component AppWindow inherits Window {
+    callback load-song();
+    callback add-song();
+    callback delete-song();
+    callback edit-song();
+    SongSelect {
+        load-song => {root.load-song()}
+        add-song => {root.add-song()}
+        delete-song => {root.delete-song()}
+        edit-song => {root.edit-song()}
+    }
+}

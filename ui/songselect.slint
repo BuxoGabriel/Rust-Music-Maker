@@ -1,0 +1,26 @@
+import { Button, VerticalBox } from "std-widgets.slint";
+
+export component SongSelect {
+    callback load-song();
+    callback add-song();
+    callback delete-song();
+    callback edit-song();
+    VerticalBox {
+        Button {
+            text: "Load Song";
+            clicked => {load-song();}
+        }
+        Button {
+            text: "Add Song";
+            clicked => {add-song();}
+        }
+        Button {
+            text: "Delete Song";
+            clicked => {delete-song();}
+        }
+        Button {
+            text: "Edit Song";
+            clicked => {edit-song();}
+        }
+    }
+}

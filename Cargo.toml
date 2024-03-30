@@ -1,7 +1,8 @@
 [package]
-name = "simple-files"
+name = "song-maker"
 version = "0.1.0"
 edition = "2021"
+build = "build.rs"
 
 [lib]
 path = "src/lib.rs"
@@ -15,3 +16,6 @@ path = "src/main.rs"
 [dependencies]
 rfd = "0.14.0"
 slint = "1.4.1"
+
+[build-dependencies]
+slint-build = "1.4.0"
