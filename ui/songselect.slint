@@ -1,26 +1,41 @@
-import { Button, VerticalBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
 
 export component SongSelect {
-    callback load-song();
     callback add-song();
+    callback load-song();
+    callback delete-song(int);
+    callback edit-song(int);
+    VerticalBox {
+        HorizontalBox {
+            for song in ["song1", "song2", "song3"]: Song {
+                song-name: song;
+                edit-song => {edit-song(song);}
+                delete-song => {delete-song(song);}
+            }
+        }
+        HorizontalBox {
+            Button {
+                text: "Load Song";
+                clicked => {load-song();}
+            }
+            Button {
+                text: "Add Song";
+                clicked => {add-song();}
+            }
+        }
+    }
+}
+
+export component Song {
+    in-out property string song-name;
     callback delete-song();
     callback edit-song();
-    VerticalBox {
-        Button {
-            text: "Load Song";
-            clicked => {load-song();}
-        }
-        Button {
-            text: "Add Song";
-            clicked => {add-song();}
-        }
-        Button {
-            text: "Delete Song";
+    HorizontalBox {
+        clicked => {edit-song();}
+        Text { text: song-name; }
+        Button { 
+            text: "x" 
             clicked => {delete-song();}
-        }
-        Button {
-            text: "Edit Song";
-            clicked => {edit-song();}
         }
     }
 }
