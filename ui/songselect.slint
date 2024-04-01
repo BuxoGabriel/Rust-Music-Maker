@@ -1,41 +1,58 @@
 import { Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
 
-export component SongSelect {
-    callback add-song();
-    callback load-song();
-    callback delete-song(int);
-    callback edit-song(int);
-    VerticalBox {
-        HorizontalBox {
-            for song in ["song1", "song2", "song3"]: Song {
-                song-name: song;
-                edit-song => {edit-song(song);}
-                delete-song => {delete-song(song);}
-            }
+component Song inherits TouchArea {
+    in-out property <string> song-name;
+    callback delete-song();
+    HorizontalBox {
+        Text {
+            text: song-name;
         }
-        HorizontalBox {
-            Button {
-                text: "Load Song";
-                clicked => {load-song();}
-            }
-            Button {
-                text: "Add Song";
-                clicked => {add-song();}
+
+        Button {
+            text: "x";
+            clicked => {
+                delete-song();
             }
         }
     }
 }
 
-export component Song {
-    in-out property string song-name;
-    callback delete-song();
-    callback edit-song();
-    HorizontalBox {
-        clicked => {edit-song();}
-        Text { text: song-name; }
-        Button { 
-            text: "x" 
-            clicked => {delete-song();}
+export component SongSelect {
+    callback add-song();
+    callback load-song();
+    callback delete-song(int);
+    callback edit-song(int);
+    in property <[string]> songs;
+    VerticalBox {
+        HorizontalBox {
+            for song[i] in songs: Song {
+                song-name: song;
+                clicked => {
+                    edit-song(i);
+                }
+                delete-song => {
+                    delete-song(i);
+                }
+            }
+        }
+
+        HorizontalBox {
+            alignment: center;
+            Button {
+                text: "Load Song";
+                width: 100px;
+                clicked => {
+                    load-song();
+                }
+            }
+
+            Button {
+                text: "Add Song";
+                width: 100px;
+                clicked => {
+                    add-song();
+                }
+            }
         }
     }
 }
